@@ -1,8 +1,10 @@
+
 name: 🔄 JWT Token Generator (India Time GMT+5:30)
 
 on:
   schedule:
-    - cron: '0 21,3,9,15 * * *' # 2:30 AM, 8:30 AM, 2:30 PM, 8:30 PM IST
+    # 2:30 AM, 8:30 AM, 2:30 PM, 8:30 PM IST
+    - cron: '0 21,3,9,15 * * *'
   workflow_dispatch:
 
 permissions:
@@ -37,11 +39,14 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
+          
+          # Add all files (includes token_others.json)
           git add .
           
+          # Check if there are changes
           if ! git diff --cached --quiet; then
-            git commit -m "🔄 Update JWT tokens"
+            echo "✨ Changes detected, committing..."
+            git commit -m "🔄 Update JWT tokens (IND, BD, NA, OTHERS)"
             git push -f https://x-access-token:${PAT}@github.com/${{ github.repository }}.git main
           else
             echo "✨ No changes to commit."
