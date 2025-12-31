@@ -18,6 +18,10 @@ Any misuse such as harassment, service abuse, or violation of Garena / Free Fire
 
 ---
 
+<div align="center">
+  <img width="100%" src="https://capsule-render.vercel.app/api?type=waving&color=ff0000,990000,ff0000&height=120&section=footer&text=Thank%20You%20For%20Using%20TSun%20Gaming&fontSize=30&fontAlignY=70&animation=twinkling&fontColor=ffffff" />
+</div>
+
 ## 📂 Token Format
 
 Tokens are provided in simple JSON format:
@@ -34,17 +38,3 @@ Tokens are provided in simple JSON format:
   }
 ]
 
-## ⚠️ Disclaimer
-</div>
-
-This tool is for educational purposes only. Use it at your own risk. The developers are not responsible for any misuse or account bans.
-
-![Waving Footer Animation](https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=35&duration=3500&pause=1000&color=F71515&width=500&height=100&lines=Thank+You+For+Using+NR+CODEX;Stay+Safe+And+Support+Me)
-
----
-<div align="center">
-
-Developed with ❤️ by **TSun-FreeFire**
-
-© 2026 TSun-FreeFire. All rights reserved.
-</div>
