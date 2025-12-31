@@ -1,40 +1,15 @@
+
 import json
 import time
 import asyncio
 import httpx
-import subprocess
 import os
 from typing import Dict, Optional
 
 # Settings
 RELEASEVERSION = "OB51"
 USERAGENT = "Dalvik/2.1.0 (Linux; U; Android 13; CPH2095 Build/RKQ1.211119.001)"
-BRANCH_NAME = "main"
 API_URL = "https://api.freefireservice.dnc.su/oauth/account:login?data="
-
-# Git Helpers
-def run_git_command(cmd):
-    try:
-        result = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT, universal_newlines=True)
-        return result.strip()
-    except subprocess.CalledProcessError as e:
-        return e.output.strip()
-
-def detect_git_conflict():
-    status = run_git_command("git status")
-    return "You are not currently on a branch" in status or "both modified" in status or "Unmerged paths" in status
-
-def resolve_git_conflict():
-    print("\n⚠️ Git Conflict Detected. Please manually resolve conflicts and save files.")
-    input("➡️ Press Enter once conflicts are resolved and files are saved...")
-    run_git_command("git add .")
-    run_git_command("git rebase --continue")
-    print("✅ Rebase continued.")
-
-def push_to_git():
-    run_git_command(f"git checkout {BRANCH_NAME}")
-    run_git_command(f"git push origin {BRANCH_NAME}")
-    print(f"🚀 Changes pushed to {BRANCH_NAME} branch.")
 
 def get_repo_and_filename(region):
     """Determine repository and filename based on region"""
@@ -42,7 +17,10 @@ def get_repo_and_filename(region):
         return "token_ind.json"
     elif region in {"BR", "US", "SAC", "NA"}:
         return "token_br.json"
+    elif region == "OTHERS":
+        return "token_others.json"  # New file for OTHERS
     else:
+        # Default for BD or others
         return "token_bd.json"
 
 # Token Generation
@@ -98,11 +76,12 @@ async def process_account_with_retry(client, index, uid, password, max_retries=2
 
 def load_accounts_from_txt(region):
     """Load accounts from acc_region.txt file"""
+    # region.lower() will convert 'OTHERS' to 'others', looking for 'acc_others.txt'
     input_file = f"acc_{region.lower()}.txt"
     accounts = []
     
     if not os.path.exists(input_file):
-        print(f"⚠️ {input_file} not found.")
+        print(f"⚠️ {input_file} not found. Skipping...")
         return accounts
     
     with open(input_file, "r") as f:
@@ -123,7 +102,6 @@ async def generate_tokens_for_region(region):
     total_accounts = len(accounts)
     
     if total_accounts == 0:
-        print(f"⚠️ No accounts found for {region} region.")
         return 0
 
     print(f"🚀 Starting Token Generation for {region} Region using API...\n")
@@ -144,15 +122,22 @@ async def generate_tokens_for_region(region):
             token = result["token"]
             token_region = result.get("notiRegion", "")
             
-            if token and token_region == region:
+            # Logic Update: 
+            # If processing "OTHERS", accept token regardless of region mismatch.
+            # If processing specific region (IND, BD), strict check applies.
+            is_valid_region = (token_region == region) or (region == "OTHERS")
+
+            if token and is_valid_region:
                 region_tokens.append({"uid": uid, "token": token})
-                print(f"✅ UID #{serial} {uid} - Token saved for {region}")
+                print(f"✅ UID #{serial} {uid} - Token saved for {region} (Region found: {token_region})")
             else:
                 failed_serials.append(serial)
                 failed_values.append(uid)
-                print(f"❌ UID #{serial} {uid} - Token generation failed for {region}")
+                print(f"❌ UID #{serial} {uid} - Failed. Got Region: {token_region}, Expected: {region}")
 
     output_file = get_repo_and_filename(region)
+    
+    # Save to file
     with open(output_file, "w") as f:
         json.dump(region_tokens, f, indent=2)
     
@@ -161,33 +146,29 @@ async def generate_tokens_for_region(region):
     seconds = int(total_time % 60)
     
     summary = (
-        f"✅ {region} Token Generation Complete\n\n"
+        f"✅ {region} Token Generation Complete\n"
         f"🔹 Total Tokens: {len(region_tokens)}\n"
-        f"🔢 Total Accounts: {total_accounts}\n"
         f"❌ Failed UIDs: {len(failed_serials)}\n"
-        f"🔸 Failed UID Serials: {', '.join(map(str, failed_serials)) or 'None'}\n"
-        f"🔸 Failed UID Values: {', '.join(map(str, failed_values)) or 'None'}\n"
-        f"⏱️ Time Taken: {minutes} minutes {seconds} seconds\n"
+        f"⏱️ Time Taken: {minutes}m {seconds}s\n"
     )
     print(summary)
     return len(region_tokens)
 
 # Run
 if __name__ == "__main__":
-    regions = ["IND", "BD", "NA"]
+    # Added OTHERS to the list
+    regions = ["IND", "BD", "NA", "OTHERS"]
     total_tokens = 0
 
     for region in regions:
-        print(f"🤖 {region} Token Generation Started...⚙️")
-        tokens_generated = asyncio.run(generate_tokens_for_region(region))
-        total_tokens += tokens_generated
+        print(f"----------------------------------------")
+        print(f"🤖 Processing {region}...")
+        try:
+            tokens_generated = asyncio.run(generate_tokens_for_region(region))
+            total_tokens += tokens_generated
+        except Exception as e:
+            print(f"⚠️ Error processing {region}: {e}")
     
+    print(f"========================================")
     print(f"🤖 All Regions Completed!\nTotal Tokens Generated: {total_tokens}")
-    
-    if detect_git_conflict():
-        print("\n⚠️ Git conflict detected during previous rebase.")
-        resolve_git_conflict()
-    
-    print("🚀 Pushing changes to Git...")
-    push_to_git()
-  
+    print(f"========================================")
