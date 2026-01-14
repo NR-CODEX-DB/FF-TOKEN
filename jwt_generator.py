@@ -9,7 +9,7 @@ from typing import Dict, Optional
 # Settings
 RELEASEVERSION = "OB51"
 USERAGENT = "Dalvik/2.1.0 (Linux; U; Android 13; CPH2095 Build/RKQ1.211119.001)"
-API_URL = "https://api.freefireservice.dnc.su/oauth/account:login?data="
+API_URL = "http://193.149.164.213:1391/JWT-API/oauth/account:login?data="
 
 def get_repo_and_filename(region):
     """Determine repository and filename based on region"""
