@@ -1,4 +1,3 @@
-
 import json
 import time
 import asyncio
@@ -6,26 +5,21 @@ import httpx
 import os
 from typing import Dict, Optional
 
-# Settings
-RELEASEVERSION = "OB51"
+RELEASEVERSION = "OB52"
 USERAGENT = "Dalvik/2.1.0 (Linux; U; Android 13; CPH2095 Build/RKQ1.211119.001)"
 API_URL = "http://193.149.164.213:1391/JWT-API/oauth/account:login?data="
 
 def get_repo_and_filename(region):
-    """Determine repository and filename based on region"""
     if region == "IND":
         return "token_ind.json"
     elif region in {"BR", "US", "SAC", "NA"}:
         return "token_br.json"
     elif region == "OTHERS":
-        return "token_others.json"  # New file for OTHERS
+        return "token_others.json"
     else:
-        # Default for BD or others
         return "token_bd.json"
 
-# Token Generation
 async def generate_jwt_token(client, uid: str, password: str) -> Optional[Dict]:
-    """Generate JWT token using the new API endpoint"""
     try:
         url = f"{API_URL}{uid}:{password}"
         headers = {
@@ -36,11 +30,11 @@ async def generate_jwt_token(client, uid: str, password: str) -> Optional[Dict]:
         resp = await client.get(url, headers=headers, timeout=30)
         if resp.status_code == 200:
             data = resp.json()
-            if "8" in data:  # JWT token is in field "8"
+            if "8" in data:
                 return {
                     "token": data["8"],
-                    "notiRegion": data.get("2", ""),  # Region is in field "2"
-                    "uid": data.get("1", "")  # UID is in field "1"
+                    "notiRegion": data.get("3", ""),
+                    "uid": str(data.get("1", ""))
                 }
         return None
     except Exception as e:
@@ -75,8 +69,6 @@ async def process_account_with_retry(client, index, uid, password, max_retries=2
     }
 
 def load_accounts_from_txt(region):
-    """Load accounts from acc_region.txt file"""
-    # region.lower() will convert 'OTHERS' to 'others', looking for 'acc_others.txt'
     input_file = f"acc_{region.lower()}.txt"
     accounts = []
     
@@ -122,9 +114,6 @@ async def generate_tokens_for_region(region):
             token = result["token"]
             token_region = result.get("notiRegion", "")
             
-            # Logic Update: 
-            # If processing "OTHERS", accept token regardless of region mismatch.
-            # If processing specific region (IND, BD), strict check applies.
             is_valid_region = (token_region == region) or (region == "OTHERS")
 
             if token and is_valid_region:
@@ -137,7 +126,6 @@ async def generate_tokens_for_region(region):
 
     output_file = get_repo_and_filename(region)
     
-    # Save to file
     with open(output_file, "w") as f:
         json.dump(region_tokens, f, indent=2)
     
@@ -154,9 +142,7 @@ async def generate_tokens_for_region(region):
     print(summary)
     return len(region_tokens)
 
-# Run
 if __name__ == "__main__":
-    # Added OTHERS to the list
     regions = ["IND", "BD", "NA", "OTHERS"]
     total_tokens = 0
 
