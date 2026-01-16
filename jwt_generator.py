@@ -171,22 +171,4 @@ if __name__ == "__main__":
     
     print(f"========================================")
     print(f"🤖 All Regions Completed!\nTotal Tokens Generated: {total_tokens}")
-    print(f"========================================")    print(summary)
-    return len(region_tokens)
-
-if __name__ == "__main__":
-    regions = ["IND", "BD", "NA", "OTHERS"]
-    total_tokens = 0
-
-    for region in regions:
-        print(f"----------------------------------------")
-        print(f"🤖 Processing {region}...")
-        try:
-            tokens_generated = asyncio.run(generate_tokens_for_region(region))
-            total_tokens += tokens_generated
-        except Exception as e:
-            print(f"⚠️ Error processing {region}: {e}")
-    
-    print(f"========================================")
-    print(f"🤖 All Regions Completed!\nTotal Tokens Generated: {total_tokens}")
     print(f"========================================")
